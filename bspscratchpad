@@ -1,0 +1,101 @@
+#!/bin/sh
+
+# MIT License
+# Copyright (c) 2021 Ayan Nath
+# https://github.com/ayan7744/bspscratchpad
+
+# bspscratchpad - i3-like scratchpad functionality for bspwm
+
+cacheFile="/tmp/bspscratchpad_ids"
+counterFile="/tmp/bspscratchpad_counter"
+
+toggle_scratchpad_flag() {
+    idFocusedWin="$(bspc query -N -n "focused")"
+    # check if the focused window is in scratchpad
+    if grep "$idFocusedWin" "$cacheFile" >/dev/null 2>&1; then
+        # remove occurences of $idFocusedWin from $cacheFile ( -v switch is for inverse searching)
+        bspc node "$idFocusedWin" -g sticky=off
+        bspc node "$idFocusedWin" -t tiled
+        grep -v "$idFocusedWin" "$cacheFile" > "${cacheFile}.tmp"
+        mv "${cacheFile}.tmp" "$cacheFile"
+        wc -l < "$cacheFile" > "$counterFile"
+        [ "$(/usr/bin/cat "$counterFile")" -eq "0" ] && echo 1 > "$counterFile"
+    else 
+        # enable floating, sticky and hidden
+        bspc node "$idFocusedWin" -g hidden
+        bspc node "$idFocusedWin" -t floating
+        bspc node "$idFocusedWin" -g sticky
+        # append $idFocusedWin to $cacheFile
+        echo "$idFocusedWin" >> "$cacheFile"
+        wc -l < "$cacheFile" > "$counterFile"
+    fi
+}
+
+cycle_scratchpad() {
+    idFocusedWin="$(bspc query -N -n "focused")"
+    # first check if there is a window, this makes it work for empty desktops
+    if [ -z "$idFocusedWin" ]; then
+        winCount=$(wc -l < "$cacheFile")
+        counter="$(/usr/bin/cat "$counterFile")"
+        nodeId=$(sed "${counter}q;d" "$cacheFile")
+        bspc node "$nodeId" -g hidden=off  
+        bspc node "$nodeId" -f
+        echo $((counter + 1)) > "$counterFile"
+        [ $(($(/usr/bin/cat "$counterFile"))) -gt "$winCount" ] && echo 1 > "$counterFile"
+    # check if the focused window is in scratchpad
+    elif grep "$idFocusedWin" "$cacheFile" >/dev/null 2>&1; then
+        bspc node "$idFocusedWin" -g hidden
+    else
+        winCount=$(wc -l < "$cacheFile")
+        counter="$(/usr/bin/cat "$counterFile")"
+        nodeId=$(sed "${counter}q;d" "$cacheFile")
+        bspc node "$nodeId" -g hidden=off  
+        bspc node "$nodeId" -f
+        echo $((counter + 1)) > "$counterFile"
+        [ $(($(/usr/bin/cat "$counterFile"))) -gt "$winCount" ] && echo 1 > "$counterFile"
+    fi
+}
+
+remove_from_scratchpad() {
+    id="$(bspc query -N -n "focused")"
+    grep -v "$id" "$cacheFile" > "${cacheFile}.remove_from_scratchpad.tmp"
+    mv "${cacheFile}.remove_from_scratchpad.tmp" "$cacheFile"
+}
+
+help_text() {
+    /usr/bin/cat << 'EOF'
+bspscratchpad - i3-like scratchpad functionality for bspwm
+
+USAGE:
+    bspscratchpad [OPTION]
+
+OPTIONS:
+    --toggle
+        Put focused window into scratchpad or remove it from scratchpad.
+
+    --cycle 
+        Cycle through windows in scratchpad
+
+    --remove
+        Remove focused window from scratchpad
+
+Copyright (c) 2021 Ayan Nath
+https://github.com/ayan7744/bspscratchpad
+EOF
+    exit 0
+}
+
+case "$1" in 
+    "--toggle")
+        toggle_scratchpad_flag
+        ;;
+    "--cycle")
+        cycle_scratchpad
+        ;;
+    "--remove")
+        remove_from_scratchpad
+        ;;
+    *)
+        help_text
+    ;;
+esac
