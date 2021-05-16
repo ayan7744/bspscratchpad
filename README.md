@@ -8,7 +8,7 @@ Put the script in your `$PATH`. Main functions:
 ```bash
 bspscratchpad --toggle
 ```
-1. Cycle through the windows in scratchpad:
+2. Cycle through the windows in scratchpad:
 ```bash
 bspscratchpad --cycle
 ```
