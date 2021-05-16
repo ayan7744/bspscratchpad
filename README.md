@@ -1,5 +1,6 @@
 # bspscratchpad
 ![posix-compliant](https://img.shields.io/static/v1?label=posix&message=compliant&color=blue&style=for-the-badge) &nbsp;
+
 A simple script to provide i3-like scratchpad functionality for bspwm. 
 ## Installation and Usage
 Put the script in your `$PATH`. Main functions:
