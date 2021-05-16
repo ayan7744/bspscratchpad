@@ -80,7 +80,6 @@ OPTIONS:
         Remove focused window from scratchpad
 
 Copyright (c) 2021 Ayan Nath
-https://github.com/ayan7744/bspscratchpad
 EOF
     exit 0
 }
